@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import { z } from "zod";
+import { logger } from "./logger.js";
 
 dotenv.config();
 
@@ -12,6 +13,17 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().min(1).default("7d"),
   CLIENT_ORIGIN: z.string().url("CLIENT_ORIGIN must be a valid URL"),
   COOKIE_SECRET: z.string().min(20, "COOKIE_SECRET should be at least 20 characters")
+});
+
+logger.info("Loading environment variables...", {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+  MONGO_URI: process.env.MONGO_URI ? "****" : undefined,
+  REDIS_URL: process.env.REDIS_URL ? "****" : undefined,
+  JWT_SECRET: process.env.JWT_SECRET ? "****" : undefined,
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
+  CLIENT_ORIGIN: process.env.CLIENT_ORIGIN,
+  COOKIE_SECRET: process.env.COOKIE_SECRET ? "****" : undefined
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
