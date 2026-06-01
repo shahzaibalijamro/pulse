@@ -1,0 +1,147 @@
+import mongoose from "mongoose";
+import { EventModel } from "../models/event.model.js";
+
+function toObjectId(id: string) {
+  return new mongoose.Types.ObjectId(id);
+}
+
+function baseMatch(siteId: string, workspaceId: string, startDate: Date, endDate: Date) {
+  return {
+    siteId: toObjectId(siteId),
+    workspaceId: toObjectId(workspaceId),
+    type: "pageview",
+    timestamp: { $gte: startDate, $lte: endDate }
+  };
+}
+
+export async function getPageviewsOverTime(
+  siteId: string,
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date
+) {
+  return EventModel.aggregate([
+    { $match: baseMatch(siteId, workspaceId, startDate, endDate) },
+    {
+      $group: {
+        _id: {
+          $dateToString: { format: "%Y-%m-%d", date: "$timestamp" }
+        },
+        pageviews: { $sum: 1 },
+        sessions: { $addToSet: "$sessionHash" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        date: "$_id",
+        pageviews: 1,
+        visitors: { $size: "$sessions" }
+      }
+    },
+    { $sort: { date: 1 } }
+  ]);
+}
+
+export async function getTopPages(
+  siteId: string,
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date,
+  limit = 10
+) {
+  return EventModel.aggregate([
+    { $match: baseMatch(siteId, workspaceId, startDate, endDate) },
+    { $group: { _id: "$path", pageviews: { $sum: 1 } } },
+    { $sort: { pageviews: -1 } },
+    { $limit: limit },
+    { $project: { _id: 0, path: "$_id", pageviews: 1 } }
+  ]);
+}
+
+export async function getReferrers(
+  siteId: string,
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date,
+  limit = 10
+) {
+  return EventModel.aggregate([
+    {
+      $match: {
+        ...baseMatch(siteId, workspaceId, startDate, endDate),
+        referrerDomain: { $ne: null }
+      }
+    },
+    { $group: { _id: "$referrerDomain", visits: { $sum: 1 } } },
+    { $sort: { visits: -1 } },
+    { $limit: limit },
+    { $project: { _id: 0, referrer: "$_id", visits: 1 } }
+  ]);
+}
+
+export async function getDeviceBreakdown(
+  siteId: string,
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date
+) {
+  return EventModel.aggregate([
+    { $match: baseMatch(siteId, workspaceId, startDate, endDate) },
+    { $group: { _id: "$device", count: { $sum: 1 } } },
+    { $project: { _id: 0, device: "$_id", count: 1 } },
+    { $sort: { count: -1 } }
+  ]);
+}
+
+export async function getCountryBreakdown(
+  siteId: string,
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date,
+  limit = 10
+) {
+  return EventModel.aggregate([
+    { $match: baseMatch(siteId, workspaceId, startDate, endDate) },
+    { $group: { _id: { country: "$country", code: "$countryCode" }, visits: { $sum: 1 } } },
+    { $sort: { visits: -1 } },
+    { $limit: limit },
+    {
+      $project: {
+        _id: 0,
+        country: "$_id.country",
+        code: "$_id.code",
+        visits: 1
+      }
+    }
+  ]);
+}
+
+export async function getSummaryStats(
+  siteId: string,
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date
+) {
+  const result = await EventModel.aggregate([
+    { $match: baseMatch(siteId, workspaceId, startDate, endDate) },
+    {
+      $group: {
+        _id: null,
+        totalPageviews: { $sum: 1 },
+        uniqueSessions: { $addToSet: "$sessionHash" },
+        topCountries: { $push: "$country" },
+        topBrowsers: { $push: "$browser" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        totalPageviews: 1,
+        uniqueVisitors: { $size: "$uniqueSessions" }
+      }
+    }
+  ]);
+
+  return result[0] ?? { totalPageviews: 0, uniqueVisitors: 0 };
+}
