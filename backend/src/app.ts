@@ -14,20 +14,27 @@ import { errorHandler, notFoundHandler } from "./middleware/error.middleware.js"
 export function createApp() {
   const app = express();
 
-  // Render, Vercel, and many hosts forward the real client IP through proxy headers.
+  // Trust proxy headers from Render/Vercel
   app.set("trust proxy", 1);
 
   app.use(helmet());
-  app.use(cors({ origin: env.CLIENT_ORIGIN, credentials: true }));
+
+  // No global CORS – apply per route below
   app.use(express.json({ limit: "50kb", type: ["application/json", "text/plain"] }));
   app.use(cookieParser(env.COOKIE_SECRET));
 
+  // Routes that are only called by YOUR dashboard (authenticated)
+  const dashboardCors = cors({ origin: env.CLIENT_ORIGIN, credentials: true });
+  app.use("/auth", dashboardCors, authRouter);
+  app.use("/sites", dashboardCors, sitesRouter);
+  app.use("/analytics", dashboardCors, analyticsRouter);
+  app.use("/active", dashboardCors, activeRouter);
+
+  // Ingestion – called by ANY website that includes the tracker
+  app.use("/i", cors({ origin: "*", credentials: false }), ingestRouter);
+
+  // Health check (no CORS needed)
   app.use("/health", healthRouter);
-  app.use("/auth", authRouter);
-  app.use("/sites", sitesRouter);
-  app.use("/ingest", ingestRouter);
-  app.use("/analytics", analyticsRouter);
-  app.use("/active", activeRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
