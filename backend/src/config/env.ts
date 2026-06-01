@@ -1,7 +1,6 @@
 import dotenv from "dotenv";
 dotenv.config();
 import { z } from "zod";
-import { logger } from "./logger.js";
 
 
 const envSchema = z.object({
@@ -15,7 +14,7 @@ const envSchema = z.object({
   COOKIE_SECRET: z.string().min(20, "COOKIE_SECRET should be at least 20 characters")
 });
 
-logger.info("Loading environment variables...", {
+console.log("Loading environment variables...", {
   NODE_ENV: process.env.NODE_ENV,
   PORT: process.env.PORT,
   MONGO_URI: process.env.MONGO_URI ? "****" : undefined,
