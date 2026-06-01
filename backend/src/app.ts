@@ -1,8 +1,8 @@
+import { env } from "./config/env.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
-import { env } from "./config/env.js";
 import { activeRouter } from "./routes/active.routes.js";
 import { analyticsRouter } from "./routes/analytics.routes.js";
 import { authRouter } from "./routes/auth.routes.js";
