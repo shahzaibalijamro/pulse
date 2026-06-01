@@ -55,7 +55,7 @@ export default function SettingsPage() {
   }
 
   async function copySnippet(siteId: string, apiKey: string) {
-    const snippet = `<script src="${window.location.origin}/tracker.js" data-api-key="${apiKey}" data-endpoint="${process.env.NEXT_PUBLIC_TRACKER_ENDPOINT ?? "http://localhost:5000/ingest"}"></script>`;
+    const snippet = `<script src="${window.location.origin}/tracker.js" data-api-key="${apiKey}" data-endpoint="${process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL + "/i" : "http://localhost:5000/i"}"></script>`;
     await navigator.clipboard.writeText(snippet);
     setCopiedKey(siteId);
     window.setTimeout(() => setCopiedKey(null), 1600);

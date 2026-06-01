@@ -3,7 +3,7 @@
   var apiKey = script ? script.getAttribute("data-api-key") : null;
   var endpoint = script ? script.getAttribute("data-endpoint") : null;
 
-  endpoint = endpoint || "http://localhost:5000/ingest";
+  endpoint = endpoint || "http://localhost:5000/i";
 
   if (!apiKey) {
     console.warn("[Pulse] Missing data-api-key on tracker script.");
