@@ -31,7 +31,7 @@ export function createApp() {
   app.use("/active", dashboardCors, activeRouter);
 
   // Ingestion – called by ANY website that includes the tracker
-  app.use("/i", cors({ origin: "*", credentials: false }), ingestRouter);
+  app.use("/i", helmet({crossOriginResourcePolicy: false}), cors({ origin: "*", credentials: false }), ingestRouter);
 
   // Health check (no CORS needed)
   app.use("/health", healthRouter);
