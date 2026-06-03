@@ -28,11 +28,11 @@ const presetDays: Record<DatePreset, number> = {
   "90d": 90
 };
 
-// The backend flushes buffered events into MongoDB on this cadence
-// (see backend/src/jobs/flushEvents.ts). We wait a hair longer before
-// re-querying analytics so the new events are visible in Pageviews /
-// MetricCards alongside the Live feed.
-const ANALYTICS_REFRESH_DELAY_MS = 1_000;
+// The backend flushes buffered events into MongoDB every 5 seconds
+// (see backend/src/jobs/flushEvents.ts). We wait 6 seconds before
+// re-querying analytics so the flush job has time to persist new
+// events before the query runs.
+const ANALYTICS_REFRESH_DELAY_MS = 6_000;
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -60,12 +60,12 @@ export default function DashboardPage() {
   }, []);
 
   const scheduleAnalyticsRefresh = useCallback(() => {
-    console.log('Scheduling analytics refresh');
+    // Throttle: if a refresh is already scheduled, skip so we don't
+    // keep resetting the timer and never fire under continuous traffic.
     if (refreshTimer.current) {
-      clearTimeout(refreshTimer.current);
+      return;
     }
     refreshTimer.current = setTimeout(() => {
-      console.log('Timeout fired, reloading analytics');
       refreshTimer.current = null;
       void reloadRef.current();
     }, ANALYTICS_REFRESH_DELAY_MS);
