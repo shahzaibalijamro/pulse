@@ -10,6 +10,7 @@ export function useAnalytics(siteId: string | null, start: string, end: string) 
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    console.log('useAnalytics.load called with siteId:', siteId, 'start:', start, 'end:', end);
     if (!siteId) {
       setData(null);
       return;
@@ -20,8 +21,10 @@ export function useAnalytics(siteId: string | null, start: string, end: string) 
 
     try {
       const bundle = await fetchAnalyticsBundle(siteId, start, end);
+      console.log('useAnalytics.load success, bundle:', bundle);
       setData(bundle);
     } catch (err) {
+      console.error('useAnalytics.load error:', err);
       setError(err instanceof Error ? err.message : "Could not load analytics");
     } finally {
       setLoading(false);

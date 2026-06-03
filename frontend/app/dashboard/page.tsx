@@ -32,7 +32,7 @@ const presetDays: Record<DatePreset, number> = {
 // (see backend/src/jobs/flushEvents.ts). We wait a hair longer before
 // re-querying analytics so the new events are visible in Pageviews /
 // MetricCards alongside the Live feed.
-const ANALYTICS_REFRESH_DELAY_MS = 5_500;
+const ANALYTICS_REFRESH_DELAY_MS = 1_000;
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -60,10 +60,12 @@ export default function DashboardPage() {
   }, []);
 
   const scheduleAnalyticsRefresh = useCallback(() => {
+    console.log('Scheduling analytics refresh');
     if (refreshTimer.current) {
       clearTimeout(refreshTimer.current);
     }
     refreshTimer.current = setTimeout(() => {
+      console.log('Timeout fired, reloading analytics');
       refreshTimer.current = null;
       void reloadRef.current();
     }, ANALYTICS_REFRESH_DELAY_MS);

@@ -30,8 +30,10 @@ export function useSocket(apiKey: string | null, onEvent?: () => void) {
     });
 
     socket.on("event:new", (event: LiveEvent) => {
+      console.log('Received new event:', event);
       setEvents((current) => [event, ...current].slice(0, 20));
       onEvent?.();
+      console.log('Called onEvent from socket');
     });
 
     return () => {
