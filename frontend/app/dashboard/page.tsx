@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BarChart3, Globe2, MousePointerClick, Users } from "lucide-react";
 import { ActiveVisitors } from "@/components/dashboard/ActiveVisitors";
@@ -28,6 +28,12 @@ const presetDays: Record<DatePreset, number> = {
   "90d": 90
 };
 
+// The backend flushes buffered events into MongoDB on this cadence
+// (see backend/src/jobs/flushEvents.ts). We wait a hair longer before
+// re-querying analytics so the new events are visible in Pageviews /
+// MetricCards alongside the Live feed.
+const ANALYTICS_REFRESH_DELAY_MS = 5_500;
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -36,10 +42,34 @@ export default function DashboardPage() {
   const range = useMemo(() => getLastNDays(presetDays[preset]), [preset]);
   const analytics = useAnalytics(selectedSite?.id ?? null, range.start, range.end);
   const activeVisitors = useActiveVisitors(selectedSite?.id ?? null);
-  const refreshAnalytics = useCallback(() => {
-    void analytics.reload();
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Keep a stable ref to reload so the socket effect doesn't re-subscribe
+  // every time the date range / site changes.
+  const reloadRef = useRef(analytics.reload);
+  useEffect(() => {
+    reloadRef.current = analytics.reload;
   }, [analytics.reload]);
-  const socket = useSocket(selectedSite?.apiKey ?? null, refreshAnalytics);
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimer.current) {
+        clearTimeout(refreshTimer.current);
+      }
+    };
+  }, []);
+
+  const scheduleAnalyticsRefresh = useCallback(() => {
+    if (refreshTimer.current) {
+      clearTimeout(refreshTimer.current);
+    }
+    refreshTimer.current = setTimeout(() => {
+      refreshTimer.current = null;
+      void reloadRef.current();
+    }, ANALYTICS_REFRESH_DELAY_MS);
+  }, []);
+
+  const socket = useSocket(selectedSite?.apiKey ?? null, scheduleAnalyticsRefresh);
 
   const isLoading = authLoading || sitesLoading;
 
