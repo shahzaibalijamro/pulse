@@ -39,17 +39,13 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [preset, setPreset] = useState<DatePreset>("30d");
   const { sites, selectedSite, selectSite, loading: sitesLoading } = useSites(Boolean(user));
-  const range = useMemo(() => getLastNDays(presetDays[preset]), [preset]);
+  // Incremented each time a socket event triggers a refresh so the date
+  // range's `end` is recomputed to include newly-flushed events.
+  const [refreshKey, setRefreshKey] = useState(0);
+  const range = useMemo(() => getLastNDays(presetDays[preset]), [preset, refreshKey]);
   const analytics = useAnalytics(selectedSite?.id ?? null, range.start, range.end);
   const activeVisitors = useActiveVisitors(selectedSite?.id ?? null);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Keep a stable ref to reload so the socket effect doesn't re-subscribe
-  // every time the date range / site changes.
-  const reloadRef = useRef(analytics.reload);
-  useEffect(() => {
-    reloadRef.current = analytics.reload;
-  }, [analytics.reload]);
 
   useEffect(() => {
     return () => {
@@ -67,7 +63,9 @@ export default function DashboardPage() {
     }
     refreshTimer.current = setTimeout(() => {
       refreshTimer.current = null;
-      void reloadRef.current();
+      // Bump the key so range.end is recomputed via getLastNDays(),
+      // which in turn triggers useAnalytics to load with a fresh end date.
+      setRefreshKey((k) => k + 1);
     }, ANALYTICS_REFRESH_DELAY_MS);
   }, []);
 
