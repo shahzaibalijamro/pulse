@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { LoadingState } from "@/components/ui/LoadingState";
 
 export default function HomePage() {
   const router = useRouter();
@@ -18,10 +17,6 @@ export default function HomePage() {
       router.replace("/login");
     }
   }, [router, user, authLoading]);
-
-  if (authLoading) {
-    return <LoadingState label="Preparing Pulse" />;
-  }
 
   return null;
 }

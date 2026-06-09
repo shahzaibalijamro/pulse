@@ -11,14 +11,16 @@ const options: Array<{ value: DatePreset; label: string }> = [
 
 export function DateRangePicker({ value, onChange }: { value: DatePreset; onChange: (value: DatePreset) => void }) {
   return (
-    <div className="grid grid-cols-3 rounded-md border border-slate-200 bg-white p-1">
+    <div className="grid grid-cols-3 rounded-sm border border-hairline dark:border-white/[0.08] bg-canvas dark:bg-white/[0.03] p-0.5 shadow-sm">
       {options.map((option) => (
         <button
           key={option.value}
           onClick={() => onChange(option.value)}
           className={cn(
-            "h-8 rounded px-3 text-sm font-medium text-slate-600 transition",
-            value === option.value && "bg-ink-950 text-white"
+            "rounded-sm px-3 font-mono text-xs font-medium text-mute transition-colors",
+            value === option.value
+              ? "bg-[#171717] text-white dark:bg-white dark:text-black"
+              : "hover:bg-canvas-soft-2 dark:hover:bg-white/[0.06] hover:text-ink"
           )}
         >
           {option.label}
@@ -27,3 +29,5 @@ export function DateRangePicker({ value, onChange }: { value: DatePreset; onChan
     </div>
   );
 }
+
+

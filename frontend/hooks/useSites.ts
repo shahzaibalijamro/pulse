@@ -9,7 +9,7 @@ const selectedSiteKey = "pulse:selected-site";
 export function useSites(enabled: boolean) {
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadSites = useCallback(async () => {
     if (!enabled) return;

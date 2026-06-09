@@ -2,20 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, Globe2, MousePointerClick, Users } from "lucide-react";
+import { MousePointerClick } from "lucide-react";
+import { AnalyticsSkeleton } from "@/components/dashboard/AnalyticsSkeleton";
 import { ActiveVisitors } from "@/components/dashboard/ActiveVisitors";
 import { CountriesTable, ReferrersTable, TopPagesTable } from "@/components/dashboard/DataTable";
 import { DateRangePicker } from "@/components/dashboard/DateRangePicker";
 import { DeviceChart } from "@/components/dashboard/DeviceChart";
 import { LiveFeed } from "@/components/dashboard/LiveFeed";
-import { MetricCard } from "@/components/dashboard/MetricCard";
 import { PageviewsChart } from "@/components/dashboard/PageviewsChart";
 import { AppFrame } from "@/components/layout/AppFrame";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { LoadingState } from "@/components/ui/LoadingState";
-import { useActiveVisitors } from "@/hooks/useActiveVisitors";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { useSites } from "@/hooks/useSites";
 import { useSocket } from "@/hooks/useSocket";
@@ -44,7 +42,6 @@ export default function DashboardPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const range = useMemo(() => getLastNDays(presetDays[preset]), [preset, refreshKey]);
   const analytics = useAnalytics(selectedSite?.id ?? null, range.start, range.end);
-  const activeVisitors = useActiveVisitors(selectedSite?.id ?? null);
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -82,7 +79,7 @@ export default function DashboardPage() {
   }, [user, router, isLoading]);
 
   if (isLoading) {
-    return <LoadingState label="Preparing Pulse" />;
+    return null;
   }
 
   if (!user) {
@@ -91,20 +88,20 @@ export default function DashboardPage() {
 
   return (
     <AppFrame sites={sites} selectedSite={selectedSite} onSelectSite={selectSite}>
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <main className="w-full mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex flex-col w-full gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-sm font-medium text-pulse-700">Analytics dashboard</p>
-            <h1 className="mt-1 text-2xl font-semibold text-ink-950">
+            <p className="font-mono text-xs uppercase tracking-wider text-mute">Analytics dashboard</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-display-sm text-ink">
               {selectedSite ? selectedSite.name : "No site selected"}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-body">
               {selectedSite ? selectedSite.domain : "Create a site to start receiving events."}
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <DateRangePicker value={preset} onChange={setPreset} />
-            <Button variant="secondary" onClick={() => router.push("/dashboard/settings")}>
+            <Button variant="secondary" className="rounded-sm" onClick={() => router.push("/dashboard/settings")}>
               <MousePointerClick className="h-4 w-4" />
               Manage sites
             </Button>
@@ -118,36 +115,14 @@ export default function DashboardPage() {
             </EmptyState>
           </div>
         ) : analytics.loading && !analytics.data ? (
-          <LoadingState label="Loading analytics" />
+          <AnalyticsSkeleton />
         ) : analytics.error ? (
           <div className="mt-8">
             <EmptyState title="Could not load analytics">{analytics.error}</EmptyState>
           </div>
         ) : (
           <div className="mt-6 space-y-6">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <MetricCard
-                label="Pageviews"
-                value={analytics.data?.summary.totalPageviews ?? 0}
-                icon={<BarChart3 className="h-5 w-5" />}
-                detail={`${preset.toUpperCase()} selected window`}
-              />
-              <MetricCard
-                label="Unique visitors"
-                value={analytics.data?.summary.uniqueVisitors ?? 0}
-                icon={<Users className="h-5 w-5" />}
-                detail="Estimated by daily session hash"
-              />
-              <MetricCard
-                label="Top country"
-                value={analytics.data?.countries[0]?.country ?? "None"}
-                icon={<Globe2 className="h-5 w-5" />}
-                detail="Based on pageview events"
-              />
-              <ActiveVisitors count={activeVisitors} />
-            </div>
-
-            <PageviewsChart data={analytics.data?.pageviews ?? []} />
+            <PageviewsChart data={analytics.data?.pageviews ?? []} summary={analytics.data?.summary} />
 
             <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
               <div className="space-y-6">

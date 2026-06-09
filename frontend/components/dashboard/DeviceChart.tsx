@@ -1,41 +1,41 @@
-"use client";
-
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Panel } from "@/components/ui/Panel";
 import type { DeviceBreakdown } from "@/lib/types";
 import { formatNumber } from "@/lib/utils";
 
-const colors = ["#0f9f8f", "#334155", "#d97706", "#64748b", "#a855f7"];
+function TableRow({ label, value, max }: { label: string; value: number; max: number }) {
+  const percent = max > 0 ? (value / max) * 100 : 0;
+  return (
+    <div className="relative flex items-center justify-between px-4 py-2.5 text-sm group">
+      <div 
+        className="absolute left-2 right-2 top-1 bottom-1 bg-accent/50 dark:bg-white/[0.04] rounded-sm -z-10 data-bar-fill" 
+        style={{ width: `calc(${percent}% - 16px)` }} 
+      />
+      <div className="flex items-center gap-2 text-foreground truncate z-10 pl-2">
+        <span className="truncate capitalize">{label}</span>
+      </div>
+      <div className="font-mono text-foreground font-medium z-10 pr-2">{formatNumber(value)}</div>
+    </div>
+  );
+}
 
 export function DeviceChart({ data }: { data: DeviceBreakdown[] }) {
+  const max = Math.max(...data.map(d => d.count), 0);
   return (
-    <Panel className="p-5">
-      <h2 className="text-base font-semibold text-ink-950">Devices</h2>
-      <div className="mt-4 grid gap-4 sm:grid-cols-[180px_1fr]">
-        <div className="h-44">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie innerRadius={48} outerRadius={78} data={data} dataKey="count" nameKey="device" paddingAngle={3}>
-                {data.map((entry, index) => (
-                  <Cell key={entry.device} fill={colors[index % colors.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => formatNumber(Number(value))} />
-            </PieChart>
-          </ResponsiveContainer>
+    <Panel className="overflow-hidden">
+      <div className="flex items-center justify-between border-b border-border dark:border-white/[0.06] px-5 py-3">
+        <div className="flex gap-4 font-medium text-sm">
+          <span className="text-foreground">Devices</span>
+          <span className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors">Browsers</span>
         </div>
-        <div className="space-y-3 self-center">
-          {data.map((item, index) => (
-            <div key={item.device} className="flex items-center justify-between text-sm">
-              <span className="flex items-center gap-2 capitalize text-slate-600">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: colors[index % colors.length] }} />
-                {item.device}
-              </span>
-              <span className="font-medium text-ink-900">{formatNumber(item.count)}</span>
-            </div>
-          ))}
-        </div>
+        <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Visitors</span>
+      </div>
+      <div className="py-2 bg-card">
+        {data.map((item) => (
+          <TableRow key={item.device} label={item.device} value={item.count} max={max} />
+        ))}
       </div>
     </Panel>
   );
 }
+
+
