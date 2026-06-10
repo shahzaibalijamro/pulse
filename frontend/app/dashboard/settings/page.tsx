@@ -2,8 +2,9 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, KeyRound, Loader2, Plus, Trash2 } from "lucide-react";
+import { Check, Copy, KeyRound, Loader2, Plus, Trash2, BookOpen } from "lucide-react";
 import { AppFrame } from "@/components/layout/AppFrame";
+import { SetupGuideModal } from "@/components/ui/SetupGuideModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +58,7 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [guideSite, setGuideSite] = useState<{ name: string; apiKey: string } | null>(null);
 
   if (!user && !authLoading) {
     router.replace("/login");
@@ -157,6 +159,10 @@ export default function SettingsPage() {
                         </code>
                       </div>
                       <div className="flex shrink-0 gap-2">
+                        <Button variant="outline" className="rounded-sm bg-transparent" onClick={() => setGuideSite({ name: site.name, apiKey: site.apiKey })}>
+                          <BookOpen className="h-4 w-4" />
+                          View setup guide
+                        </Button>
                         <Button variant="secondary" className="rounded-sm" onClick={() => copySnippet(site.id, site.apiKey)}>
                           {copiedKey === site.id ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                           {copiedKey === site.id ? "Copied" : "Copy snippet"}
@@ -173,6 +179,12 @@ export default function SettingsPage() {
           </div>
         )}
       </main>
+      <SetupGuideModal
+        isOpen={!!guideSite}
+        onClose={() => setGuideSite(null)}
+        siteName={guideSite?.name ?? ""}
+        apiKey={guideSite?.apiKey ?? ""}
+      />
     </AppFrame>
   );
 }

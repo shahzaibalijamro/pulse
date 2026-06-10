@@ -31,7 +31,7 @@ export function AppFrame({ sites, selectedSite, onSelectSite, children }: AppFra
   return (
     <div className="min-h-screen bg-canvas-soft dark:bg-background flex">
       {/* Desktop sidebar */}
-      <aside className="sidebar-atmosphere fixed inset-y-0 left-0 hidden w-72 border-r border-hairline dark:border-white/[0.06] bg-canvas dark:bg-[#0a0a0a] lg:block overflow-y-auto">
+      <aside className="sidebar-atmosphere h-[100dvh] fixed inset-y-0 left-0 hidden w-72 border-r border-hairline dark:border-white/[0.06] bg-canvas dark:bg-[#0a0a0a] lg:block overflow-y-auto">
         <SidebarContent
           workspace={workspace}
           sites={sites}
@@ -63,7 +63,7 @@ export function AppFrame({ sites, selectedSite, onSelectSite, children }: AppFra
         </div>
       )}
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 h-[100dvh] overflow-y-auto">
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-border dark:border-white/[0.06] bg-background/90 px-4 backdrop-blur-sm lg:hidden">
           <div className="flex items-center gap-3">
             <Button
@@ -110,7 +110,7 @@ function SidebarContent({
 }) {
   return (
     <div className="relative z-10 flex h-full flex-col">
-      <div className="border-b border-hairline dark:border-white/[0.06] p-6">
+      <div className="border-b lg:block hidden border-hairline dark:border-white/[0.06] p-6">
         <div className="flex items-center gap-3">
           {onClose && (
             <Button
@@ -122,7 +122,7 @@ function SidebarContent({
             </Button>
           )}
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-ink text-white dark:shadow-[0_0_12px_rgba(255,255,255,0.06)]">
+            <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-ink text-white dark:text-black dark:shadow-[0_0_12px_rgba(255,255,255,0.06)]">
               <Activity className="h-4 w-4" />
             </div>
             <div>
@@ -132,6 +132,23 @@ function SidebarContent({
           </Link>
         </div>
       </div>
+
+      {/* Mobile Header */}
+      <header className="top-0 z-20 flex h-14 items-center justify-between border-b border-border dark:border-white/[0.06] bg-background/90 dark:bg-transparent px-4 backdrop-blur-sm lg:hidden">
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            className="h-8 w-8 px-0 rounded-sm"
+            onClick={onClose}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+          <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-foreground">
+            <Activity className="h-4 w-4" />
+            Pulse
+          </Link>
+        </div>
+      </header>
 
       <div className="p-4">
         <label className="font-mono text-xs uppercase tracking-wider text-mute">Current site</label>
@@ -167,7 +184,7 @@ function SidebarContent({
           <ShieldCheck className="h-4 w-4 text-ink dark:text-muted-foreground" />
           Workspace queries are isolated by tenant.
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <ThemeToggle />
           <Button variant="ghost" className="w-full justify-start rounded-sm" onClick={onLogout}>
             <LogOut className="h-4 w-4" />
