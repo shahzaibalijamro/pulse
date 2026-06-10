@@ -144,7 +144,7 @@ export default defineNuxtConfig({
           <Tabs defaultValue="html" className="w-full">
             <TabsList className="mb-4 bg-canvas border border-hairline dark:border-white/[0.08] p-1">
               <TabsTrigger value="html" className="rounded-sm text-xs font-medium">HTML / Vue</TabsTrigger>
-              <TabsTrigger value="nextjs" className="rounded-sm text-xs font-medium">React / Next.js</TabsTrigger>
+              <TabsTrigger value="nextjs" className="rounded-sm text-xs font-medium">Next.js</TabsTrigger>
               <TabsTrigger value="nuxt" className="rounded-sm text-xs font-medium">Nuxt</TabsTrigger>
               <TabsTrigger value="svelte" className="rounded-sm text-xs font-medium">SvelteKit</TabsTrigger>
             </TabsList>

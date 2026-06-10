@@ -1,96 +1,93 @@
-import bcrypt from "bcryptjs";
 import { Router } from "express";
 import mongoose from "mongoose";
+import { OAuth2Client } from "google-auth-library";
 import { clearAuthCookie, setAuthCookie } from "../config/cookies.js";
 import { logger } from "../config/logger.js";
-import { authLoginLimiter } from "../middleware/rateLimit.middleware.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { UserModel } from "../models/user.model.js";
 import { WorkspaceModel } from "../models/workspace.model.js";
-import { loginSchema, registerSchema } from "../schemas/auth.schema.js";
+import { googleLoginSchema } from "../schemas/auth.schema.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { HttpError } from "../utils/httpError.js";
 import { signAuthToken } from "../utils/jwt.js";
 
 export const authRouter = Router();
 
-authRouter.post(
-  "/register",
-  validate(registerSchema),
-  asyncHandler(async (req, res) => {
-    const { email, password, workspaceName } = req.body;
-    const existingUser = await UserModel.findOne({ email }).lean();
-
-    if (existingUser) {
-      throw new HttpError(409, "Email is already registered");
-    }
-
-    const userId = new mongoose.Types.ObjectId();
-    const workspaceId = new mongoose.Types.ObjectId();
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    const workspace = await WorkspaceModel.create({
-      _id: workspaceId,
-      name: workspaceName || `${email.split("@")[0]}'s workspace`,
-      ownerId: userId,
-      plan: "free"
-    });
-
-    const user = await UserModel.create({
-      _id: userId,
-      email,
-      passwordHash,
-      workspaceId
-    });
-
-    const token = signAuthToken({
-      userId: user._id.toString(),
-      workspaceId: workspace._id.toString()
-    });
-
-    setAuthCookie(res, token);
-    logger.info("User registered", { userId: user._id.toString(), workspaceId: workspace._id.toString() });
-
-    res.status(201).json({
-      user: toSafeUser(user),
-      workspace: toSafeWorkspace(workspace)
-    });
-  })
-);
+// TODO: REPLACE_WITH_YOUR_GOOGLE_CLIENT_ID
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID_HERE";
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 authRouter.post(
-  "/login",
-  authLoginLimiter,
-  validate(loginSchema),
+  "/google",
+  validate(googleLoginSchema),
   asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-    const user = await UserModel.findOne({ email }).select("+passwordHash");
+    const { token } = req.body;
 
-    if (!user) {
-      throw new HttpError(401, "Invalid email or password");
+    // Verify the Google ID token
+    let ticket;
+    try {
+      ticket = await googleClient.verifyIdToken({
+        idToken: token,
+        audience: GOOGLE_CLIENT_ID
+      });
+    } catch {
+      throw new HttpError(401, "Invalid Google token");
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      throw new HttpError(401, "Could not extract email from Google token");
+    }
 
-    if (!isPasswordValid) {
-      logger.warn("Failed login", { email });
-      throw new HttpError(401, "Invalid email or password");
+    const { email, sub: googleId, name, picture } = payload;
+
+    // Find existing user by email or create a new one
+    let user = await UserModel.findOne({ email });
+
+    if (user) {
+      // Update Google fields if they changed
+      if (googleId && user.googleId !== googleId) user.googleId = googleId;
+      if (name && user.name !== name) user.name = name;
+      if (picture && user.picture !== picture) user.picture = picture;
+      await user.save();
+    } else {
+      // Create new user + workspace
+      const userId = new mongoose.Types.ObjectId();
+      const workspaceId = new mongoose.Types.ObjectId();
+
+      await WorkspaceModel.create({
+        _id: workspaceId,
+        name: `${name || email.split("@")[0]}'s workspace`,
+        ownerId: userId,
+        plan: "free"
+      });
+
+      user = await UserModel.create({
+        _id: userId,
+        email,
+        googleId,
+        name,
+        picture,
+        workspaceId
+      });
     }
 
     const workspace = await WorkspaceModel.findById(user.workspaceId).lean();
-
     if (!workspace) {
       throw new HttpError(500, "Workspace missing for user");
     }
 
-    const token = signAuthToken({
+    const jwtToken = signAuthToken({
       userId: user._id.toString(),
       workspaceId: user.workspaceId.toString()
     });
 
-    setAuthCookie(res, token);
-    logger.info("User logged in", { userId: user._id.toString(), workspaceId: user.workspaceId.toString() });
+    setAuthCookie(res, jwtToken);
+    logger.info("User signed in via Google", {
+      userId: user._id.toString(),
+      email
+    });
 
     res.json({
       user: toSafeUser(user),
@@ -125,12 +122,16 @@ authRouter.get(
 function toSafeUser(user: {
   _id: unknown;
   email: string;
+  name?: string;
+  picture?: string;
   workspaceId: unknown;
   createdAt?: Date;
 }) {
   return {
     id: String(user._id),
     email: user.email,
+    name: user.name,
+    picture: user.picture,
     workspaceId: String(user.workspaceId),
     createdAt: user.createdAt
   };

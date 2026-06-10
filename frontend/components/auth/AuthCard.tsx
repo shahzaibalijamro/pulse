@@ -5,10 +5,10 @@ export function AuthCard({ title, subtitle, children }: { title: string; subtitl
   return (
     <main className="flex min-h-screen items-center justify-center bg-canvas-soft dark:bg-background px-4 py-10">
       <div className="grid w-full max-w-4xl overflow-hidden rounded-lg border border-hairline dark:border-white/[0.06] bg-canvas dark:bg-card shadow-level5 md:grid-cols-[0.9fr_1.1fr]">
-        <aside className="relative hidden bg-ink p-8 text-white md:flex md:flex-col md:justify-between overflow-hidden">
+        <aside className="relative hidden bg-[#171717] p-8 text-white md:flex md:flex-col md:justify-between overflow-hidden">
           {/* Subtle atmospheric mesh gradient */}
-          <div 
-            className="absolute inset-0 pointer-events-none opacity-40" 
+          <div
+            className="absolute inset-0 pointer-events-none opacity-40"
             style={{
               backgroundImage: `
                 radial-gradient(circle at top right, rgba(80, 227, 194, 0.4) 0%, transparent 60%),
@@ -19,14 +19,14 @@ export function AuthCard({ title, subtitle, children }: { title: string; subtitl
           />
           <div className="relative z-10">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-white text-ink">
+              <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-white text-[#171717]">
                 <Activity className="h-4 w-4" />
               </div>
               <span className="text-base font-semibold tracking-display-sm">Pulse</span>
             </div>
-            <div className="mt-16">
+            <div className="my-6">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-soft">Realtime analytics</p>
-              <h1 className="mt-4 max-w-sm text-2xl font-semibold leading-snug tracking-display-md">
+              <h1 className="mt-4 max-w-sm text-2xl font-semibold leading-snug tracking-display-md text-white">
                 Privacy-first website metrics for modern client dashboards.
               </h1>
             </div>

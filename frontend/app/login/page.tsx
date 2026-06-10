@@ -1,74 +1,60 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { Loader2, LogIn } from "lucide-react";
+import { useState } from "react";
+import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { loginWithGoogle } = useAuth();
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleGoogleSuccess(response: CredentialResponse) {
     setError(null);
-    setSubmitting(true);
+
+    if (!response.credential) {
+      setError("No credential received from Google");
+      return;
+    }
 
     try {
-      await login(email, password);
+      await loginWithGoogle(response.credential);
       router.replace("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not sign in");
-    } finally {
-      setSubmitting(false);
+      setError(err instanceof Error ? err.message : "Could not sign in with Google");
     }
   }
 
+  function handleGoogleError() {
+    setError("Google sign-in was cancelled or failed. Please try again.");
+  }
+
   return (
-    <AuthCard title="Welcome back" subtitle="Sign in to monitor your website analytics.">
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="text-sm font-medium text-ink" htmlFor="email">Email</label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="mt-2"
-            required
+    <AuthCard title="Welcome to Pulse." subtitle="Sign in with your Google account to get started.">
+      <div className="flex flex-col items-center gap-5">
+        <div className="w-full flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="large"
+            shape="rectangular"
+            width="320"
+            text="signin_with"
+            logo_alignment="left"
           />
         </div>
-        <div>
-          <label className="text-sm font-medium text-ink" htmlFor="password">Password</label>
-          <Input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="mt-2"
-            required
-          />
-        </div>
-        {error ? <p className="rounded-sm border border-error bg-error-soft/30 px-3 py-2 text-sm text-error">{error}</p> : null}
-        <Button type="submit" className="w-full rounded-sm" disabled={submitting}>
-          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4" />}
-          {submitting ? "Signing in" : "Sign in"}
-        </Button>
-      </form>
-      <p className="mt-6 text-center text-sm text-mute">
-        New to Pulse?{" "}
-        <Link href="/register" className="font-medium text-success hover:underline">
-          Create an account
-        </Link>
-      </p>
+        {error ? (
+          <p className="w-full rounded-sm border border-error bg-error-soft/30 px-3 py-2 text-sm text-error">
+            {error}
+          </p>
+        ) : null}
+        <p className="text-xs text-mute text-center">
+          By signing in, you agree to our Terms of Service and Privacy Policy.
+        </p>
+      </div>
     </AuthCard>
   );
 }

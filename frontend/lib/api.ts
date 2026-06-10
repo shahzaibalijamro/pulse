@@ -52,16 +52,10 @@ async function request<T>(path: string, options: RequestOptions = {}) {
 }
 
 export const api = {
-  login(email: string, password: string) {
-    return request<AuthResponse>("/auth/login", {
+  loginWithGoogle(token: string) {
+    return request<AuthResponse>("/auth/google", {
       method: "POST",
-      body: { email, password }
-    });
-  },
-  register(email: string, password: string, workspaceName?: string) {
-    return request<AuthResponse>("/auth/register", {
-      method: "POST",
-      body: { email, password, workspaceName }
+      body: { token }
     });
   },
   logout() {

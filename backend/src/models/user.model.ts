@@ -9,10 +9,16 @@ const UserSchema = new Schema(
       lowercase: true,
       trim: true
     },
-    passwordHash: {
+    googleId: {
       type: String,
-      required: true,
-      select: false
+      unique: true,
+      sparse: true
+    },
+    name: {
+      type: String
+    },
+    picture: {
+      type: String
     },
     workspaceId: {
       type: Schema.Types.ObjectId,
@@ -30,6 +36,8 @@ UserSchema.methods.toSafeJSON = function toSafeJSON() {
   return {
     id: this._id.toString(),
     email: this.email,
+    name: this.name,
+    picture: this.picture,
     workspaceId: this.workspaceId.toString(),
     createdAt: this.createdAt
   };
@@ -41,6 +49,8 @@ export type UserDocument = mongoose.HydratedDocument<User> & {
   toSafeJSON: () => {
     id: string;
     email: string;
+    name?: string;
+    picture?: string;
     workspaceId: string;
     createdAt: Date;
   };

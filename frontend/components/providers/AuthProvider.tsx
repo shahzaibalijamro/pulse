@@ -8,8 +8,7 @@ type AuthContextValue = {
   user: User | null;
   workspace: Workspace | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, workspaceName?: string) => Promise<void>;
+  loginWithGoogle: (token: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -38,14 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void refresh();
   }, [refresh]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    const result = await api.login(email, password);
-    setUser(result.user);
-    setWorkspace(result.workspace);
-  }, []);
-
-  const register = useCallback(async (email: string, password: string, workspaceName?: string) => {
-    const result = await api.register(email, password, workspaceName);
+  const loginWithGoogle = useCallback(async (token: string) => {
+    const result = await api.loginWithGoogle(token);
     setUser(result.user);
     setWorkspace(result.workspace);
   }, []);
@@ -57,8 +50,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, workspace, loading, login, register, logout, refresh }),
-    [user, workspace, loading, login, register, logout, refresh]
+    () => ({ user, workspace, loading, loginWithGoogle, logout, refresh }),
+    [user, workspace, loading, loginWithGoogle, logout, refresh]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
