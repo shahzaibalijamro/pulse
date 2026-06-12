@@ -12,6 +12,11 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { HttpError } from "../utils/httpError.js";
 import { signAuthToken } from "../utils/jwt.js";
 
+function toSafeOptionalString(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
+}
+
+
 export const authRouter = Router();
 
 // TODO: REPLACE_WITH_YOUR_GOOGLE_CLIENT_ID
@@ -119,25 +124,19 @@ authRouter.get(
   })
 );
 
-function toSafeUser(user: {
-  _id: unknown;
-  email: string;
-  name?: string;
-  picture?: string;
-  workspaceId: unknown;
-  createdAt?: Date;
-}) {
+function toSafeUser(user: any) {
   return {
     id: String(user._id),
-    email: user.email,
-    name: user.name,
-    picture: user.picture,
+    email: String(user.email),
+    name: toSafeOptionalString(user.name),
+    picture: toSafeOptionalString(user.picture),
     workspaceId: String(user.workspaceId),
     createdAt: user.createdAt
   };
 }
 
 function toSafeWorkspace(workspace: {
+
   _id: unknown;
   name: string;
   plan: string;
