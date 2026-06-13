@@ -45,11 +45,19 @@ ingestRouter.post(
       browser: parsedAgent.browser,
       os: parsedAgent.os,
       device: parsedAgent.device,
+      screenResolution: req.body.screenResolution || null,
+      language: req.body.language || null,
       country: geo.country,
       countryCode: geo.countryCode,
       sessionHash,
+      utm: req.body.utm || {},
       eventName: req.body.eventName || null,
-      properties: req.body.properties || {},
+      properties: {
+        ...(req.body.properties || {}),
+        ...(req.body.depth !== undefined && { depth: req.body.depth }),
+        ...(req.body.durationSeconds !== undefined && { durationSeconds: req.body.durationSeconds }),
+        ...(req.body.linkUrl !== undefined && { linkUrl: req.body.linkUrl })
+      },
       timestamp
     };
 

@@ -7,7 +7,11 @@ import type {
   Referrer,
   Site,
   SummaryStats,
-  TopPage
+  TopPage,
+  Campaign,
+  EngagementStats,
+  BehaviorStats,
+  LockedResponse
 } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5000";
@@ -87,16 +91,19 @@ export const api = {
 };
 
 export async function fetchAnalyticsBundle(siteId: string, start: string, end: string): Promise<AnalyticsBundle> {
-  const [summary, pageviews, pages, referrers, devices, countries] = await Promise.all([
+  const [summary, pageviews, pages, referrers, devices, countries, campaigns, engagement, behavior] = await Promise.all([
     api.analytics<SummaryStats>("summary", siteId, start, end),
     api.analytics<PageviewPoint[]>("pageviews", siteId, start, end),
     api.analytics<TopPage[]>("pages", siteId, start, end, 10),
     api.analytics<Referrer[]>("referrers", siteId, start, end, 10),
     api.analytics<DeviceBreakdown[]>("devices", siteId, start, end),
-    api.analytics<CountryBreakdown[]>("countries", siteId, start, end, 10)
+    api.analytics<CountryBreakdown[]>("countries", siteId, start, end, 10),
+    api.analytics<Campaign[] | LockedResponse>("campaigns", siteId, start, end, 10),
+    api.analytics<EngagementStats | LockedResponse>("engagement", siteId, start, end),
+    api.analytics<BehaviorStats | LockedResponse>("behavior", siteId, start, end)
   ]);
 
-  return { summary, pageviews, pages, referrers, devices, countries };
+  return { summary, pageviews, pages, referrers, devices, countries, campaigns, engagement, behavior };
 }
 
 export function getApiUrl() {

@@ -16,7 +16,7 @@ const EventSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["pageview", "click", "custom"],
+      enum: ["pageview", "click", "custom", "scroll", "click_outbound", "session_end"],
       required: true
     },
     url: {
@@ -42,6 +42,21 @@ const EventSchema = new Schema(
     os: {
       type: String,
       default: "Unknown"
+    },
+    screenResolution: {
+      type: String,
+      default: null
+    },
+    language: {
+      type: String,
+      default: null
+    },
+    utm: {
+      source: { type: String, default: null },
+      medium: { type: String, default: null },
+      campaign: { type: String, default: null },
+      term: { type: String, default: null },
+      content: { type: String, default: null }
     },
     device: {
       type: String,

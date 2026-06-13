@@ -15,7 +15,7 @@ export const requireAuth = asyncHandler(async (req: Request, _res: Response, nex
   }
 
   const payload = verifyAuthToken(token);
-  const user = await UserModel.findById(payload.userId).select("_id workspaceId").lean();
+  const user = await UserModel.findById(payload.userId).select("_id workspaceId email").lean();
 
   if (!user) {
     throw new HttpError(401, "User no longer exists");

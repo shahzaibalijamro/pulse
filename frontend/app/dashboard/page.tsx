@@ -10,6 +10,7 @@ import { DateRangePicker } from "@/components/dashboard/DateRangePicker";
 import { DeviceChart } from "@/components/dashboard/DeviceChart";
 import { LiveFeed } from "@/components/dashboard/LiveFeed";
 import { PageviewsChart } from "@/components/dashboard/PageviewsChart";
+import { PremiumInsights } from "@/components/dashboard/PremiumInsights";
 import { AppFrame } from "@/components/layout/AppFrame";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/button";
@@ -137,6 +138,12 @@ export default function DashboardPage() {
               </div>
               <LiveFeed events={socket.events} connected={socket.connected} />
             </div>
+
+            <PremiumInsights 
+              campaigns={analytics.data?.campaigns}
+              engagement={analytics.data?.engagement}
+              behavior={analytics.data?.behavior}
+            />
           </div>
         )}
       </main>

@@ -17,6 +17,16 @@ const WorkspaceSchema = new Schema(
       type: String,
       enum: ["free", "pro"],
       default: "free"
+    },
+    stripeCustomerId: {
+      type: String,
+      default: null,
+      index: true
+    },
+    stripeSubscriptionId: {
+      type: String,
+      default: null,
+      index: true
     }
   },
   {

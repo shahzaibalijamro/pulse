@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, BarChart3, LogOut, Menu, Settings, ShieldCheck, X } from "lucide-react";
+import { Activity, BarChart3, LogOut, Menu, Settings, ShieldCheck, X, CreditCard } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -176,6 +176,13 @@ function SidebarContent({
           icon={<Settings className="h-4 w-4" />}
         >
           Settings
+        </NavLink>
+        <NavLink
+          href="/dashboard/settings/billing"
+          active={pathname === "/dashboard/settings/billing"}
+          icon={<CreditCard className="h-4 w-4" />}
+        >
+          Billing
         </NavLink>
       </nav>
 

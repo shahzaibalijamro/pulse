@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { SiteModel } from "../models/site.model.js";
+import { WorkspaceModel } from "../models/workspace.model.js";
 import { analyticsQuerySchema, parseAnalyticsDateRange } from "../schemas/common.schema.js";
 import {
   getCountryBreakdown,
@@ -9,7 +10,10 @@ import {
   getPageviewsOverTime,
   getReferrers,
   getSummaryStats,
-  getTopPages
+  getTopPages,
+  getCampaigns,
+  getEngagement,
+  getBehavior
 } from "../services/analytics.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { HttpError } from "../utils/httpError.js";
@@ -25,6 +29,11 @@ analyticsRouter.get("/pages", validate(analyticsQuerySchema), analyticsHandler("
 analyticsRouter.get("/referrers", validate(analyticsQuerySchema), analyticsHandler("referrers"));
 analyticsRouter.get("/devices", validate(analyticsQuerySchema), analyticsHandler("devices"));
 analyticsRouter.get("/countries", validate(analyticsQuerySchema), analyticsHandler("countries"));
+
+// Premium routes
+analyticsRouter.get("/campaigns", validate(analyticsQuerySchema), premiumAnalyticsHandler("campaigns"));
+analyticsRouter.get("/engagement", validate(analyticsQuerySchema), premiumAnalyticsHandler("engagement"));
+analyticsRouter.get("/behavior", validate(analyticsQuerySchema), premiumAnalyticsHandler("behavior"));
 
 function analyticsHandler(type: "summary" | "pageviews" | "pages" | "referrers" | "devices" | "countries") {
   return asyncHandler(async (req, res) => {
@@ -74,6 +83,48 @@ async function runAnalyticsQuery(
     case "countries":
       return getCountryBreakdown(siteId, workspaceId, startDate, endDate, limit);
   }
+}
+
+function premiumAnalyticsHandler(type: "campaigns" | "engagement" | "behavior") {
+  return asyncHandler(async (req, res) => {
+    const start = Date.now();
+    const { siteId, limit } = req.query as unknown as {
+      siteId: string;
+      start?: string;
+      end?: string;
+      limit?: number;
+    };
+    const { startDate, endDate } = parseAnalyticsDateRange(req.query.start as string, req.query.end as string);
+    const workspaceId = req.auth!.workspaceId;
+
+    await assertSiteBelongsToWorkspace(siteId, workspaceId);
+
+    const workspace = await WorkspaceModel.findById(workspaceId).select("plan").lean();
+    if (!workspace || workspace.plan !== "pro") {
+      return res.json({ locked: true });
+    }
+
+    let data;
+    switch (type) {
+      case "campaigns":
+        data = await getCampaigns(siteId, workspaceId, startDate, endDate, limit);
+        break;
+      case "engagement":
+        data = await getEngagement(siteId, workspaceId, startDate, endDate);
+        break;
+      case "behavior":
+        data = await getBehavior(siteId, workspaceId, startDate, endDate);
+        break;
+    }
+
+    logger.info("Premium Analytics query", {
+      siteId,
+      queryType: type,
+      durationMs: Date.now() - start
+    });
+
+    res.json({ data });
+  });
 }
 
 async function assertSiteBelongsToWorkspace(siteId: string, workspaceId: string) {

@@ -145,3 +145,143 @@ export async function getSummaryStats(
 
   return result[0] ?? { totalPageviews: 0, uniqueVisitors: 0 };
 }
+
+export async function getCampaigns(
+  siteId: string,
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date,
+  limit = 10
+) {
+  return EventModel.aggregate([
+    {
+      $match: {
+        siteId: toObjectId(siteId),
+        workspaceId: toObjectId(workspaceId),
+        type: "pageview",
+        timestamp: { $gte: startDate, $lte: endDate },
+        "utm.source": { $ne: null }
+      }
+    },
+    {
+      $group: {
+        _id: {
+          source: "$utm.source",
+          medium: "$utm.medium",
+          campaign: "$utm.campaign"
+        },
+        visits: { $sum: 1 }
+      }
+    },
+    { $sort: { visits: -1 } },
+    { $limit: limit },
+    {
+      $project: {
+        _id: 0,
+        source: "$_id.source",
+        medium: "$_id.medium",
+        campaign: "$_id.campaign",
+        visits: 1
+      }
+    }
+  ]);
+}
+
+export async function getEngagement(
+  siteId: string,
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date
+) {
+  const sessions = await EventModel.aggregate([
+    {
+      $match: {
+        siteId: toObjectId(siteId),
+        workspaceId: toObjectId(workspaceId),
+        timestamp: { $gte: startDate, $lte: endDate }
+      }
+    },
+    {
+      $group: {
+        _id: "$sessionHash",
+        eventCount: { $sum: 1 },
+        sessionDuration: {
+          $max: {
+            $cond: [
+              { $eq: ["$type", "session_end"] },
+              "$properties.durationSeconds",
+              0
+            ]
+          }
+        }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalSessions: { $sum: 1 },
+        bouncedSessions: {
+          $sum: { $cond: [{ $eq: ["$eventCount", 1] }, 1, 0] }
+        },
+        avgSessionDuration: { $avg: "$sessionDuration" }
+      }
+    }
+  ]);
+
+  const res = sessions[0] || { totalSessions: 0, bouncedSessions: 0, avgSessionDuration: 0 };
+  const bounceRate = res.totalSessions > 0 ? (res.bouncedSessions / res.totalSessions) * 100 : 0;
+  
+  return {
+    bounceRate: Number(bounceRate.toFixed(2)),
+    avgSessionDurationSeconds: Number((res.avgSessionDuration || 0).toFixed(1))
+  };
+}
+
+export async function getBehavior(
+  siteId: string,
+  workspaceId: string,
+  startDate: Date,
+  endDate: Date
+) {
+  const scrolls = await EventModel.aggregate([
+    {
+      $match: {
+        siteId: toObjectId(siteId),
+        workspaceId: toObjectId(workspaceId),
+        type: "scroll",
+        timestamp: { $gte: startDate, $lte: endDate }
+      }
+    },
+    {
+      $group: {
+        _id: "$properties.depth",
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ]);
+
+  const outboundClicks = await EventModel.aggregate([
+    {
+      $match: {
+        siteId: toObjectId(siteId),
+        workspaceId: toObjectId(workspaceId),
+        type: "click_outbound",
+        timestamp: { $gte: startDate, $lte: endDate }
+      }
+    },
+    {
+      $group: {
+        _id: "$properties.linkUrl",
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { count: -1 } },
+    { $limit: 10 }
+  ]);
+
+  return {
+    scrolls: scrolls.map(s => ({ percentage: s._id, count: s.count })),
+    outboundClicks: outboundClicks.map(c => ({ url: c._id, count: c.count }))
+  };
+}

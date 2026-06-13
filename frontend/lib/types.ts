@@ -60,6 +60,27 @@ export type CountryBreakdown = {
   visits: number;
 };
 
+export type Campaign = {
+  source: string;
+  medium: string;
+  campaign: string;
+  visits: number;
+};
+
+export type EngagementStats = {
+  bounceRate: number;
+  avgSessionDurationSeconds: number;
+};
+
+export type BehaviorStats = {
+  scrolls: { percentage: number; count: number }[];
+  outboundClicks: { url: string; count: number }[];
+};
+
+export type LockedResponse = {
+  locked: true;
+};
+
 export type AnalyticsBundle = {
   summary: SummaryStats;
   pageviews: PageviewPoint[];
@@ -67,6 +88,9 @@ export type AnalyticsBundle = {
   referrers: Referrer[];
   devices: DeviceBreakdown[];
   countries: CountryBreakdown[];
+  campaigns?: Campaign[] | LockedResponse;
+  engagement?: EngagementStats | LockedResponse;
+  behavior?: BehaviorStats | LockedResponse;
 };
 
 export type DatePreset = "7d" | "30d" | "90d";
