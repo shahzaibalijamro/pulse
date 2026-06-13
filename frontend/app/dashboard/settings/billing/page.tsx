@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { PricingCard } from "@/components/billing/PricingCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import { AppFrame } from "@/components/layout/AppFrame";
 import { useSites } from "@/hooks/useSites";
 
-export default function BillingPage() {
+function BillingContent() {
   const { user, workspace, loading: authLoading } = useAuth();
   const { sites, selectedSite, selectSite } = useSites(Boolean(user));
 
@@ -19,11 +19,7 @@ export default function BillingPage() {
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (searchParams.get("success")) {
-      // Optional: Show a success toast or banner
-    }
-  }, [searchParams]);
+  const isSuccess = searchParams.get("success") === "true";
 
   if (authLoading || !workspace) {
     return (
@@ -61,6 +57,18 @@ export default function BillingPage() {
   return (
     <AppFrame sites={sites} selectedSite={selectedSite} onSelectSite={selectSite}>
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        {isSuccess && (
+          <div className="mb-8 rounded-sm border border-cyan-500/30 bg-cyan-500/10 p-4 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+            <CheckCircle className="h-5 w-5 text-cyan-500 mt-0.5 shrink-0" />
+            <div>
+              <h3 className="text-sm font-semibold text-cyan-700 dark:text-cyan-400">Payment Successful</h3>
+              <p className="text-sm text-cyan-700/80 dark:text-cyan-400/80 mt-1">
+                Your workspace has been upgraded to the Pro plan. You now have access to premium tracking insights.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div>
           <p className="font-mono text-xs uppercase tracking-wider text-mute">Workspace settings</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-display-sm text-ink">Billing & Plan</h1>
@@ -92,5 +100,17 @@ export default function BillingPage() {
         </div>
       </main>
     </AppFrame>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-canvas-soft dark:bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <BillingContent />
+    </Suspense>
   );
 }

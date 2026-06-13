@@ -63,7 +63,7 @@ export function PricingCard({ workspaceId }: { workspaceId: string }) {
         </ul>
         {error && <p className="mt-4 text-sm text-error">{error}</p>}
       </CardContent>
-      <CardFooter>
+      <CardFooter className="flex-col items-center">
         <Button
           className="w-full font-medium"
           onClick={handleCheckout}
@@ -72,6 +72,9 @@ export function PricingCard({ workspaceId }: { workspaceId: string }) {
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {loading ? "Preparing checkout..." : "Upgrade to Pro"}
         </Button>
+        <p className="mt-4 text-xs text-muted-foreground text-center px-2 leading-relaxed">
+          Test mode active. Use card <span className="font-mono bg-canvas-soft-2 dark:bg-white/[0.04] px-1 py-0.5 rounded text-ink/80 dark:text-white/80 border border-hairline dark:border-white/[0.08]">4242 4242 4242 4242</span> with any future date and CVC to test the upgrade flow.
+        </p>
       </CardFooter>
     </Card>
   );
